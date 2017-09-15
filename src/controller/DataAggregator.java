@@ -2,13 +2,13 @@ package controller;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Set;
 
 import model.Page;
 
 public interface DataAggregator {
+    
+	//solo metodo aggregate() che poi chiamerà saveData()
 	
-	public void save(Page page) throws SQLException, IOException;
-	public Page get(String url) throws SQLException;
-	public Set<String> getUrls(String resource)throws SQLException;
+	public void saveData(Page page) throws SQLException, IOException;
+	public Page getData(String url);
 }

@@ -15,9 +15,6 @@ import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 
-import java.awt.Dialog;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.sql.SQLException;
 
 import org.eclipse.jface.layout.TableColumnLayout;
@@ -26,16 +23,16 @@ import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.custom.TableCursor;
-import view.eclipse.wb.swt.SWTResourceManager;
+import org.eclipse.wb.swt.SWTResourceManager;
 
 import com.jaunt.NotFound;
 import com.jaunt.ResponseException;
 
-import controller.Controller;
 import controller.PageDataAggregator;
 import controller.Store;
+import controller.UserControl;
 import controller.WebConnector;
-import controller.HtmlScraping;
+import controller.WebScraping;
 
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -43,33 +40,30 @@ import org.eclipse.swt.widgets.TableItem;
 
 import utilities.ValidatorUrl;
 import exceptions.InputNotValidException;
-import exceptions.PageNotFoundOnDatabaseException;
-
+import exceptions.PageNotFoundException;
+import model.Model;
 import model.Page;
 
-
-import org.eclipse.swt.widgets.List;
-import org.eclipse.jface.viewers.ListViewer;
-import org.eclipse.swt.browser.Browser;
-
-public class SwtGui extends Gui{
-	
-	/*
-	 * Limito l'utilizzo della view esclusivamente alla visualizzazione della finestra di utilizzo
-	 * da parte dell'utente e alla visualizzazione dei dati associati all'input dell'utente
-	 */
-	
+public class SwtGui implements UI{
 
 	protected Shell shell;
 	private Text text;
+	private Table table;
+	private ValidatorUrl validator;
 	private Store Database;
-	private Page model;  //il model è statico in quanto bisogna mantenere in memoria i dati
-    private Controller controller;
-	
+    
 	/**
 	 * Launch the application.
 	 * @param args
 	 */
+	public static void main(String[] args) {
+		try {
+			SwtGui window = new SwtGui();
+			window.open();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
 	/**
 	 * Open the window.
@@ -88,20 +82,18 @@ public class SwtGui extends Gui{
 
 	public void runInterface(Store database){
 		this.Database=database;
-		super.run();
-	/*	
+		
 		try {
-			SwtGui window = super.run();;
+			SwtGui window = new SwtGui();
 			window.open();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		*/
+		
 	}
 	
 	/**
 	 * Create contents of the window.
-	 * @wbp.parser.entryPoint
 	 */
 	protected void createContents() {
 		shell = new Shell();
@@ -130,14 +122,34 @@ public class SwtGui extends Gui{
 		
 		ScrolledComposite scrolledComposite = new ScrolledComposite(shell, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
 		FormData fd_scrolledComposite = new FormData();
-		fd_scrolledComposite.left = new FormAttachment(lblNewLabel, 0, SWT.LEFT);
-		fd_scrolledComposite.right = new FormAttachment(100, -33);
+		fd_scrolledComposite.right = new FormAttachment(100, -10);
+		fd_scrolledComposite.left = new FormAttachment(0, 81);
 		scrolledComposite.setLayoutData(fd_scrolledComposite);
 		scrolledComposite.setExpandHorizontal(true);
 		scrolledComposite.setExpandVertical(true);
 		
+		table = new Table(scrolledComposite, SWT.BORDER | SWT.FULL_SELECTION);
+		table.setHeaderVisible(true);
+		table.setLinesVisible(true);
+		
+		TableColumn tblclmnTagname = new TableColumn(table, SWT.NONE);
+		tblclmnTagname.setWidth(134);
+		tblclmnTagname.setText("Type");
+		
+		TableColumn tblclmnTagname_1 = new TableColumn(table, SWT.NONE);
+		tblclmnTagname_1.setWidth(100);
+		tblclmnTagname_1.setText("TagName");
+		
+		TableColumn tblclmnTagsData = new TableColumn(table, SWT.NONE);
+		tblclmnTagsData.setWidth(300);
+		tblclmnTagsData.setText("Tag's Data");
+		
+		
+		scrolledComposite.setContent(table);
+		scrolledComposite.setMinSize(table.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+		
 		Button ConnectButton = new Button(shell, SWT.NONE);
-		fd_scrolledComposite.top = new FormAttachment(ConnectButton, 21);
+		fd_scrolledComposite.top = new FormAttachment(ConnectButton, 20);
 		
 		/*
 		 * aziona la logica di business relativa alla connessione di una risorsa ed allo scrap
@@ -146,12 +158,10 @@ public class SwtGui extends Gui{
 		
 		ConnectButton.addSelectionListener(new SelectionAdapter() {
 			
-			  //  private Controller controller;
-			    
-			    private ValidatorUrl validator; 
-			    
+			    private UserControl user;
+			    private Page model;
 			@Override
-			public void widgetSelected(SelectionEvent e){
+			public void widgetSelected(SelectionEvent e) {
 				
 				/*
 				 * azionare la logica di business relativa alla connessione di una risorsa ed allo scrap
@@ -167,12 +177,8 @@ public class SwtGui extends Gui{
 			                user.scrapPage("url");
 			                }
 				 */
-				
-                validator = new ValidatorUrl();
-				String url = validator.fixUrl(text.getText());  
-				
-				//OK
-				
+
+				String url = text.getText();   
 				   if(!validator.validate(url)){
 					    try {
 							throw new InputNotValidException();
@@ -181,118 +187,62 @@ public class SwtGui extends Gui{
 							e1.printStackTrace();
 						}
 				   }
-				   				   
-				   controller = new Controller(new HtmlScraping(url));
-				   
-				   try{
-				   model = controller.showDataFromScraping();  //ritorno i dati da mostrare all'utente
-				   
-				   }catch(NotFound e1){
-					   e1.printStackTrace();
-					   
-				   }
-				   //print(this.model);
-		
-		       //    this.user = new UserControl(new WebScraping(url, model), new PageDataAggregator(Database, model));
+				   this.model = new Page(url, validator.getHost(url));
+		           this.user = new UserControl(new WebScraping(url, model), new PageDataAggregator(Database, model));
 			       
-			/*		try {
-						controller.showDataFromScraping(url);
+					try {
+						user.viewScrapPageData();
 					} catch (NotFound | ResponseException | SQLException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
-					}  */
+					}
 				
-				System.out.println("ciao");
+				System.out.println("Dio");
 				   
 			}
 			
 		});
-		
 		FormData fd_ConnectButton = new FormData();
 		fd_ConnectButton.bottom = new FormAttachment(text, 75, SWT.BOTTOM);
 		fd_ConnectButton.right = new FormAttachment(0, 195);
 		fd_ConnectButton.top = new FormAttachment(text, 20);
 		fd_ConnectButton.left = new FormAttachment(0, 58);
 		ConnectButton.setLayoutData(fd_ConnectButton);
-		ConnectButton.setText("Scrap Page");
+		ConnectButton.setText("Connect");
 		
 		Button SearchDataPageButton = new Button(shell, SWT.NONE);
 		
 		
 		SearchDataPageButton.addSelectionListener(new SelectionAdapter() {
 			
-		//	private Controller controller;
-			private ValidatorUrl urlVal;
-			
 			@Override
 			public void widgetSelected(SelectionEvent e){
-				
 				//azionare la logica di business relativa alla ricerca dei contenuti di una pagina su DB
-				
-				urlVal = new ValidatorUrl();
-				
-				String url=text.getText();
-				String res="";
-				
-				
-					try {
-						if(!(urlVal.validate(text.getText())))
-							
-						throw  new InputNotValidException();
-						
-					} catch (InputNotValidException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				
-					res = urlVal.getHost(url);
-				                
-				
-				controller=new Controller(new PageDataAggregator(Database));
-				try{
-				controller.showDataPageFromDB(url);
-				}catch(SQLException e2) { e2.printStackTrace();}
-		
+				/*
+				 * this.user = new UserControl(new PageDataAggregator(Database,new Page()));  
+			      printToTable(user.viewPage(urlToView));
+				*/
+				System.out.println("Cristo");
 			}
 		});
 		FormData fd_SearchDataPageButton = new FormData();
-		fd_SearchDataPageButton.top = new FormAttachment(text, 20);
-		fd_SearchDataPageButton.bottom = new FormAttachment(scrolledComposite, -21);
 		fd_SearchDataPageButton.left = new FormAttachment(ConnectButton, 49);
+		fd_SearchDataPageButton.top = new FormAttachment(text, 20);
+		fd_SearchDataPageButton.bottom = new FormAttachment(scrolledComposite, -20);
 		SearchDataPageButton.setLayoutData(fd_SearchDataPageButton);
 		SearchDataPageButton.setText("Search Data Page");
 		
 		Button saveDataButton = new Button(shell, SWT.NONE);
-		fd_scrolledComposite.bottom = new FormAttachment(saveDataButton, -22);
-		
-		List list = new List(scrolledComposite, SWT.BORDER);
-		list.setItems(new String[] {"model"});
-		scrolledComposite.setContent(list);
-		scrolledComposite.setMinSize(list.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+		fd_scrolledComposite.bottom = new FormAttachment(saveDataButton, -23);
 		
 		
 		saveDataButton.addSelectionListener(new SelectionAdapter() {
-			
-		//	private Controller controller;
 			
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				
 				//delegare il database a salvare i dati
-				// Controller controller = new Controller(new PageDataAggregator(this.Database));
-				//controller.saveData();
-				//dialog.open("Data are saved");
-				
-				controller = new Controller(new PageDataAggregator(Database));
-				try{
-					
-					// vado a salvare i dati precedentemente parsati e mantenuti in memoria
-				controller.saveData(model); 
-								
-				}
-				catch(SQLException | IOException e3){ e3.printStackTrace();}
-				
-				System.out.println("Data has been saved");
+				System.out.println(text.getText());
 			}
 		});
 		FormData fd_saveDataButton = new FormData();
@@ -309,8 +259,6 @@ public class SwtGui extends Gui{
 		
         SearchPagesButton.addSelectionListener(new SelectionAdapter() {
 			
-        //	private Controller controller;
-        	private ValidatorUrl val;
 			@Override
 			public void widgetSelected(SelectionEvent e){
 				
@@ -319,16 +267,6 @@ public class SwtGui extends Gui{
 				 * this.user = new UserControl(new PageDataAggregator(Database,new Page()));  
 			      printToTable(user.viewPage(urlToView));
 				*/
-				String res = text.getText();
-				res = val.getHost(res);
-				
-				controller = new Controller(new PageDataAggregator(Database));
-				try{
-				controller.showUrlPagesByResourceNameFromDB(res);
-				}
-				catch(SQLException e2){
-					e2.printStackTrace();
-				}
 			}
 		});
 		FormData fd_SearchPagesButton = new FormData();
@@ -355,4 +293,5 @@ public class SwtGui extends Gui{
 		 * 
 		*/
   }
+  
 }

@@ -1,10 +1,10 @@
 package view;
 import controller.Store;
 import exceptions.InputNotValidException;
-import exceptions.PageNotFoundOnDatabaseException;
+import exceptions.PageNotFoundException;
 
 public interface UI {
 
-	public void runInterface(Store Database) throws InputNotValidException, PageNotFoundOnDatabaseException;
+	public void runInterface(Store Database) throws InputNotValidException, PageNotFoundException;
 	
 }

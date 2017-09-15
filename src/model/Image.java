@@ -3,15 +3,17 @@ package model;
 public class Image {
 	
 	private String src_img;
+	private String description_img;
 	private String altText_img;
 	private String height_img;
 	private String width_img;
 	
 	public Image(){}
 	
-	public Image(String src, String altText_img, String height_img, String width_img) {
+	public Image(String src, String description, String altText_img, String height_img, String width_img) {
 		super();
 		this.src_img = src;
+		this.description_img = description;
 		this.altText_img = altText_img;
 		this.height_img = height_img;
 		this.width_img = width_img;
@@ -23,7 +25,12 @@ public class Image {
 	public void setSrc_img(String src) {
 		this.src_img = src;
 	}
-	
+	public String getDescription() {
+		return description_img;
+	}
+	public void setDescription(String description) {
+		this.description_img = description;
+	}
 	public String getaltText_img() {
 		return altText_img;
 	}
@@ -51,6 +58,7 @@ public class Image {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((altText_img == null) ? 0 : altText_img.hashCode());
+		result = prime * result + ((description_img == null) ? 0 : description_img.hashCode());
 		result = prime * result + ((height_img == null) ? 0 : height_img.hashCode());
 		result = prime * result + ((src_img == null) ? 0 : src_img.hashCode());
 		result = prime * result + ((width_img == null) ? 0 : width_img.hashCode());
@@ -71,7 +79,11 @@ public class Image {
 				return false;
 		} else if (!altText_img.equals(other.altText_img))
 			return false;
-		
+		if (description_img == null) {
+			if (other.description_img != null)
+				return false;
+		} else if (!description_img.equals(other.description_img))
+			return false;
 		if (height_img == null) {
 			if (other.height_img != null)
 				return false;
@@ -92,7 +104,7 @@ public class Image {
 
 	@Override
 	public String toString() {
-		return "Image [src=" + src_img + ", altText_img=" + altText_img + ", height_img=" + height_img
+		return "Image [src=" + src_img + ", description=" + description_img + ", altText_img=" + altText_img + ", height_img=" + height_img
 				+ ", width_img=" + width_img + "]";
 	}
 }

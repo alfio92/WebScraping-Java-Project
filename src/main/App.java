@@ -1,9 +1,9 @@
 package main;
-import exceptions.PageNotFoundOnDatabaseException;
-import exceptions.ResourceNotFoundOnDatabaseException;
-import repository.MySQLDB;
+import exceptions.PageNotFoundException;
+import exceptions.ResourceNotFoundException;
 import controller.Store;
 import exceptions.InputNotValidException;
+import persistence.MySQLDB;
 import view.SwtGui;
 import view.UI;;
 
@@ -13,18 +13,16 @@ import view.UI;;
  */
 public class App 
 {
-    public static void main( String[] args ) throws PageNotFoundOnDatabaseException, ResourceNotFoundOnDatabaseException, InputNotValidException, ClassNotFoundException, InstantiationException, IllegalAccessException
+    public static void main( String[] args ) throws PageNotFoundException, ResourceNotFoundException, InputNotValidException
     {
     	
     		
         /*All'avvio dell'applicazione è necessario che questa, per prima cosa si colleghi al database,
     	quindi si crea l'istanza del db */
     	
-    	Store Database = new MySQLDB("127.0.0.1", "webconn" ,3306, "root", "");
-      	Database.connect();
-    	
-    	UI userInterface = new SwtGui();
+    	Store Database= new MySQLDB("127.0.0.1", "webscrapingdatabase" ,3306, "root", "");
+	
+    	UI userInterface = new SwtGui(/*Database*/);
     	userInterface.runInterface(Database);
-    	
     }
 }

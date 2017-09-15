@@ -3,17 +3,18 @@ import java.util.Set;
 import java.util.LinkedHashSet;
 
 
-public class Page {
-	
+public class Page implements Model{
 	
 	private String hostname;
 	private String urlPage;
 	private String title;
-	private Header headers;
-	private Set<Text> texts;
+	private String pageLanguage;
+	private String last_modified_date;
+	private Metadata metadata;
+	private Text text;
 	private Set<Image> imagesContainer;
 	private Set<Link> linksContainer;
-	private Set<Media> MediasContainer;
+	private Set<Video> videosContainer;
 
 	
 	public String getHostname() {
@@ -35,6 +36,19 @@ public class Page {
 	public void setTitle(String title) {
 		this.title = title;
 	}
+	
+	public String getLanguage() {
+		return pageLanguage;
+	}
+	public void setLanguage(String pageLanguage) {
+		this.pageLanguage = pageLanguage;
+	}
+	public String getLast_modified_date() {
+		return last_modified_date;
+	}
+	public void setLast_modified_date(String last_modified_date) {
+		this.last_modified_date = last_modified_date;
+	}
 
 	public Set<Image> getImagesContainer() {
 		return imagesContainer;
@@ -48,87 +62,88 @@ public class Page {
 	public void setLinksContainer(Set<Link> linksContainer) {
 		this.linksContainer = linksContainer;
 	}
+	public Metadata getMetadata() {
+		return metadata;
+	}
+	public void setMetadata(Metadata metadata) {
+		this.metadata = metadata;
+	}
+	public Text getText() {
+		return text;
+	}
+	public void setText(Text text) {
+		this.text = text;
+	}
+	public Set<Video> getVideosContainer() {
+		return videosContainer;
+	}
+	public void setVideosContainer(Set<Video> videosContainer) {
+		this.videosContainer = videosContainer;
+	}
 	
-	public Header getHeaders() {
-		return headers;
-	}
-	public void setHeaders(Header headers) {
-		this.headers = headers;
-	}
-	public Set<Text> getText() {
-		return texts;
-	}
-	public void setText(Set<Text> texts) {
-		this.texts = texts;
-	}
-	public Set<Media> getMediasContainer() {
-		return MediasContainer;
-	}
-	public void setMediasContainer(Set<Media> MediasContainer) {
-		this.MediasContainer = MediasContainer;
-	}
-	
-	public void setHeaders(String contentType, String contentEncoding, String contentLanguage, String cacheControl, String connection, String server){
-		
-		this.headers.setContentType(contentType);
-		this.headers.setContentEncoding(contentEncoding);
-		this.headers.setContentLanguage(contentLanguage);
-		this.headers.setCacheControl(cacheControl);
-		this.headers.setConnection(connection);
-		this.headers.setServer(server);
-		
-	}
-
-	public void addImageInstance(String src, String altText, String height, String width){
+	//controllo Duplicati?
+	public void addImageInstance(String src, String description, String altText, String height, String width){
 		
 		if(src == null) return;	
 		
-	  Image img =new Image(src, altText, height, width);
+	  Image img =new Image(src, description, altText, height, width);
 	  this.imagesContainer.add(img);
 	}
-    public void addLinkInstance(String href, String linkText, String linkTitle){
+    public void addLinkInstance(String href, String linkText, String linkTitle, String linkType){
 		
     if(href == null) return;
     	
-	  Link link = new Link(href, linkText, linkTitle);
+	  Link link = new Link(href, linkText, linkTitle, linkType);
 	  
       this.linksContainer.add(link);
 	}
-    public void addMediaInstance(String tagname, String src, String type, String height, String width){
+    public void addVideoInstance(String src, String videoText, String heigth, String width){
 	
     if(src == null) return;
     
-	  Media media = new Media(tagname, src, type, height, width);
-	  this.MediasContainer.add(media);
+	  Video video = new Video(src, videoText, heigth, width);
+	  this.videosContainer.add(video);
     }
-    
-    public void addText(String type, String content){
+    public void addHeadingText(String tagHeader, String htext){
     	
-    	Text text = new Text(type, content);
+    	if(htext == null)return;
     	
-    	this.texts.add(text);
-    	
+    	this.text.addHeading(tagHeader, htext);
     }
-    
-    public Page(){
+    public void addParagraphText(String par){
     	
-    	this.headers = new Header();
-		this.texts = new LinkedHashSet<Text>();
-		this.imagesContainer = new LinkedHashSet<Image>();
-		this.linksContainer = new LinkedHashSet<Link>();
-		this.MediasContainer= new LinkedHashSet<Media>();
+    	if(par == null)return;
+    	
+    	this.text.addParagraph(par);
+    }
+    public void addTextList(String lt){
+    	
+    	if(lt == null)return;
+    	
+    	this.text.addTextList(lt);
+    }
+    	
+    public void addMetadata(String author, String description, String charset, String keywords){
+    	
+      this.metadata.setAuthor(author);
+      this.metadata.setDescription(description);
+      this.metadata.setCharset(charset);
+      this.metadata.setKeywords(keywords);
+      
     }
    	
-	public Page(String hostname, String urlPage, String title) {
+	public Page(String hostname, String urlPage, String title, String language, String last_modified_date) {
 		super();
 		this.hostname = hostname;
 		this.urlPage = urlPage;
 		this.title = title;
-		this.headers = new Header();
-		this.texts = new LinkedHashSet<Text>();
+		this.pageLanguage = language;
+		this.last_modified_date = last_modified_date;
+		this.text = new Text();
+		this.metadata = new Metadata();
 		this.imagesContainer = new LinkedHashSet<Image>();
 		this.linksContainer = new LinkedHashSet<Link>();
-		this.MediasContainer= new LinkedHashSet<Media>();  
+		this.videosContainer= new LinkedHashSet<Video>();  
 	}
 	
 	public Page(String hostname, String urlPage){
@@ -136,18 +151,18 @@ public class Page {
 		super();
 		this.hostname = hostname;
 		this.urlPage = urlPage;
-		this.texts = new LinkedHashSet<Text>();
-		this.headers = new Header();
+		this.text = new Text();
+		this.metadata = new Metadata();
 		this.imagesContainer = new LinkedHashSet<Image>();
 		this.linksContainer = new LinkedHashSet<Link>();
-		this.MediasContainer= new LinkedHashSet<Media>();  
+		this.videosContainer= new LinkedHashSet<Video>();  
 	}
 	
 	public void print(){
 		//Stampa dei dati riguardanti la pagina
     	System.out.println(this.toString());
-    	System.out.println(this.headers.toString());
-    	System.out.println(this.texts.toString());
+    	System.out.println(this.metadata.toString());
+    	System.out.println(this.text.toString());
 		//iterazioni per la stampa dei vari dati strutturati presenti nella pagina
     	
 		for(Image img : this.imagesContainer){
@@ -157,15 +172,14 @@ public class Page {
 			System.out.println(link.toString());
 		}
 		
-		for(Media vid: this.MediasContainer){
+		for(Video vid: this.videosContainer){
 			System.out.println(vid.toString());
 		}
 	
 	}
 	@Override
 	public String toString() {
-		return "Page [hostname=" + hostname + ", urlPage=" + urlPage + ", title=" + title + "]";
+		return "Page [hostname=" + hostname + ", urlPage=" + urlPage + ", title=" + title + ", pageLanguage="
+				+ pageLanguage + ", last_modified_date=" + last_modified_date + "]";
 	}
-
-	
 }
